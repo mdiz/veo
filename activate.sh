@@ -1,0 +1,1 @@
+. veoenv/bin/activate
