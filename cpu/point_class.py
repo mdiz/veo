@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Site:
+class xSite:
 	physical_address: str
 	building_number: str
 	building_address: str
@@ -14,7 +14,24 @@ class Site:
 
 
 @dataclass
-class CPU:
+class xDGU:
+	name: str
+	description: str
+	modbus_type: str
+
+
+
+@dataclass
+class xIO:
+	name: str
+	description: str
+	value: float
+	type: str
+	register: int
+
+
+@dataclass
+class xCPU:
 	cpu_name: str
 	cpu_id: int
 	pole_rate: int
@@ -25,22 +42,29 @@ class CPU:
 
 
 @dataclass
-class Application:
+class xApplication:
 	app_name: str
-	type: str = "ACU"
-	unit: int = 1
+	type: str
+	unit: int
+	control_pg: str
+	io: str
+	var: None
 
 
 @dataclass
-class Point(Application):
-	point_name: str = "PointName"
-	description: str = "PointDescription"
-	value: float = 0.0
-	last_value: float = 0.0
-	last_change: float = 0.0
-	units: str = "degF"
+class xPoint():
+	point_name: str
+	description: str
+	value: float
+	last_value: float
+	last_change: float
+	units: str
 	# app: str = "ACU"
-	dgu: int = 1 # this would only be connected to IO from the DGU class.  could use is_io attribute to know to look 
+	dgu: int # this would only be connected to IO from the DGU class.  could use is_io attribute to know to look 
+
+	def __str__(self):
+		info=self.point_name + " " + self.description 
+		return info
 
 	def name_description(self):
 		v = self.point_name + " " + self.description
@@ -50,13 +74,25 @@ class Point(Application):
 # Var, Input, Output, input type, output type, 
 
 
-ACU1.AV1.value
 
 
-mytest = Point("return_temp", unit=2, app_name="degC")
-mytest2 = Point(33)
+class Point:
+	def __init__(self, name, value):
+		self.name = name
+		self.value = value
 
-mytest.point_name="mike"
-print(mytest)
-print(mytest2)
-mytest.name_description()
+
+
+class Application:
+	def __init__(self, name, var):
+		self.name = name
+		self.var = var
+
+
+
+AI1 = Point("SpaceTemp", 72)
+AHU1 = Application("AHU",1)
+
+
+
+
