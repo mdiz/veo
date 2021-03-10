@@ -37,7 +37,8 @@
 
 
 from acu_dict import acu_var_dict
-
+#from acu_code import acu_fan_def
+#import acu_code
 
 
 class AppCode():
@@ -48,7 +49,6 @@ class AppCode():
 			if self.vUnitFanRunMode.value == 1 and self.vScheduleStateLocal.value != 0:
 				lvFanCall = 1
 				print("Fan call active. Fan set to run continuously during occupied periods")
-
 
 
 class Var():
@@ -64,11 +64,20 @@ class Var():
 	
 
 class App():
+	#def __init__(self, app_name, id, var_dict, app_code):
 	def __init__(self, app_name, id, var_dict):
 		self.app_name = app_name
 		self.id = id
 		for key, value in var_dict.items():
 			setattr(self, key, Var(id=value["id"], name=value["name"], description=value["description"], value=value["value"], units=value["units"], last_change=value["last_change"], local_log=value["local_log"]))
+		#setattr(self, acu_fan, app_code)
+		#self.app_code = app_code
+		from acu_code import acu_fan_def
+
+# import app_code to global namespace and use with App class.  
+# if that works try import into local class namespace
+
+
 
 
 	def var_link(link, var):
@@ -86,8 +95,17 @@ class App():
 
 
 
+#acu1 = App("acu1", 1, acu_var_dict, acu_fan_def)
+#acu1 = App("acu1", 1, acu_var_dict, acu_code)
 acu1 = App("acu1", 1, acu_var_dict)
+
 #space_temp = Var(22, "space_temp", "Space Temperature", 74, 9, 1234, 1)
 print("done")
-acu1.run_fan()
-print(acu1.vLogFileDuration.value)
+print(dir(acu1))
+#print(acu1.vUnitFanDeltatControlEnable.value)
+#print(acu1.app_code)
+#acu1.app_code(acu1)
+#print(acu_code.acu_fan_def)
+#print(acu1.app_code.acu_fan_def)
+#acu1.app_code.acu_fan_def(acu1)
+#acu1.acu_fan_def(acu1)
