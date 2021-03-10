@@ -1,99 +1,93 @@
+#import sys
+#sys.path.append(r'/Users/chris/ModulesAndPackages')
+#sys.path.append(r'/home/mikedismore/projects/veo/')
+#print(sys.path)
 
-"""dot notation
-procedural programming
-dunder methods 
-inheritance vs composition
-inheritance is an "is a" relationship
-composition is an "has a" relationship
-__init__ is a constructor
-The Object Super Class
-dir() returns a list of all the members in the specified object
-isinstance() to determin if instance is part of a class.  isinstance(AV1, VeoAppVar) returns true or false
-You can access the parent class from inside a method of a child class by using super()
-#print(locals()) to print all the local objects in memory
-"""
+#import acu_dict
+#import acu_dict as acu_all_dict
+#from acu_dict import acu_dict2
+#from acu_dict import acu_dict2 as acu_var_dict, acu_dict1 as acu_io_dict
+
+# can also call from within function so module not available outside that namespace
+
+# Import a package
+# package is a group of modules in a folder
+# package initialization
+# inside the folder of modules add a file called __init__.py
+# inside __init__.py add import statents for modules to import when "import folderName" is used
 
 
-"""
-some research i need to do:
+# to import all with __init__.py, add this to file.
+#	__all__ = [
+#	"module1",
+#	"module2",
+#	"module3",
+#	]
+# then use "from folderName import *" in module you want to import to
+# while import * is a bad practice, this allows you to control what happens when it's used
+# can do same thing for a module to control what "import *" imports
+# can add sub packages by adding subfolders
+# can use a relative import with .. to evaluate to parent package or sub package.  "from .. import package" to import from parent
+# "from ..subPackage import package to import from sub package"
 
-how to setup composition between App and Var classes
 
-https://realpython.com/inheritance-composition-python/
-"""
+#print(acu_dict.__file__) # to find where module is stored
+#print(dir()) # print names in namespace
+#print(dir(acu_dict)) # print names in module
 
-class App():
-	def __init__(self, app_name, id, dictionary):
-		self.app_name = app_name
-		self.id = id
-		for key, value in dictionary.items():
-			#setattr(self, key, Var(value["var_name"], value["value"], value["id"]))
-			setattr(self, key, Var(name=value["name"], value=value["value"], id=value["id"]))
 
-		# DO WE WANT ATTRIBUTES IN COMPISITION CLASS OR PART OF APP CLASS
-		# DO WE STORE VAR VALUE ONLY IN CLASS OR ALL ATTRIBUTES
-		# WILL NEED VALUE, TIME FOR STABLE, ON/OFF TIME IN CONTROL CODE
-		# COULD HAVE TWO VAR CLASSES WITH ONE OF THEM VALUE ONLY SO ACU1.SpaceTemp WORKS OR CREATE LOOKUP FOR VAR NAME
-		# COULD USE ALAIS
-		# WOULD BE COOL TO HAVE HISTORY OF CONFIG TYPE POINTS, LIKE SETPOINT, ENABLE THIS OR DISABLE THAT.
+from acu_dict import acu_var_dict
 
-		# need method for saving attributes to file every hour
-		# need to work out how to run the control code
 
-		# BUILD SYSTEM ON ACU TO TEST LOADING VARS, RUNNING CONTROL CODE, SAVING VALUES ...
-		# THIS WILL ALLOW FOR PERFORMANCE MEASURING AND CONSEPT TESTING
-		# CHECK OUT HOW TO STRUCTURE AN APPLICATION AS PART OF THIS
-	def save_app(self):
-		# Saves attribute values to file
-		print(self.app_name)
-		print(acu1.__dict__) # trying to use this to save to dict
-		return acu1.__dict__
+
+class AppCode():
+	def acu_fan(self):
+		if self.vDisableUnitControl.value == 0:
+			lvFanCall = 0
+			lvSafetyTripped = 0
+			if self.vUnitFanRunMode.value == 1 and self.vScheduleStateLocal.value != 0:
+				lvFanCall = 1
+				print("Fan call active. Fan set to run continuously during occupied periods")
 
 
 
 class Var():
-	def __init__(self, name, value, id):
-		self.name = name
-		self.value = value
+	def __init__(self, id, name, description, value, units, last_change, local_log):
 		self.id = id
+		self.name = name
+		self.description = description
+		self.value = value
+		self.units = units
+		self.last_change = last_change
+		self.local_log = local_log
+
+	
+
+class App():
+	def __init__(self, app_name, id, var_dict):
+		self.app_name = app_name
+		self.id = id
+		for key, value in var_dict.items():
+			setattr(self, key, Var(id=value["id"], name=value["name"], description=value["description"], value=value["value"], units=value["units"], last_change=value["last_change"], local_log=value["local_log"]))
 
 
-acu_var_dict = {
-"space_temp":{"id":"1", "name":"spaceTemp", "value":"74"},
-"return_temp":{"id":"2", "name":"returnTemp", "value":"55"},
-}
+	def var_link(link, var):
+		pass
+		#print(self.)
+
+
+	def save_app(self):
+		# Saves attribute values to file
+		print(self.app_name)
+		#print(acu1.__dict__) # trying to use this to save to dict
+		print(self.vLogFileDuration.name)
+		if self.vLogFileDuration.value > 0:
+			print(f"{self.vLogFileDuration.name} is {self.vLogFileDuration.value}")
+
+
 
 acu1 = App("acu1", 1, acu_var_dict)
-#ACU2 = App("ACU2", 1, acu_var_dict)
-
-print(acu1.space_temp.name, acu1.space_temp.value, acu1.space_temp.id)
-print(acu1.return_temp.name, acu1.return_temp.value, acu1.return_temp.id)
-test = acu1.save_app()
-print(test)
-for key, value in test.items():
-	print(key, value)
-
-
-print(acu1.space_temp.__dict__)
-print(acu1.space_temp.__dict__["value"])
-SpaceTemp=acu1.space_temp.__dict__["value"]
-print(SpaceTemp)
-
-# this shows we need var name as class.  need class generator for App class to generate var component class bassed on dict
-# ACU1.SpaceTemp.value
-# this can't be a inheritance with a  child class.  It's composition with a component
-# ME.AV1_Object_Name.value
-# ME.AV1_Description.value
-# ME.AV1_Present_Value.value
-# ME.AV1_Units.value
-# ME.AV1_Input_Type.value
-# ME.AV1_Configuration.value
-# ME.AV1
-
-# ACU1.AV1_Object_Name.value
-# ACU1.AV1_Description.value
-# ACU1.AV1_Present_Value.value
-# ACU1.AV1_Units.value
-# ACU1.AV1_Input_Type.value
-# ACU1.AV1_Configuration.value
-# ACU1.AV1
+#space_temp = Var(22, "space_temp", "Space Temperature", 74, 9, 1234, 1)
+print("done")
+acu1.run_fan()
+print(acu1.vLogFileDuration.value)
