@@ -131,7 +131,7 @@ class DGU(): # stat1 = DGU("stat", 1, stat1_io_dict, "acu_code")
 		
 		for key, value in dic.items():
 			setattr(self, key, IO(register=value["register"], format=value["format"], type=value["type"], ref=value["ref"], name=value["name"], description=value["description"], value=value["value"], units=value["units"], last_change=value["last_change"], local_log=value["local_log"]))
-			setattr(self, key+"_value", value["value"])
+			#setattr(self, key+"_value", value["value"])
 
 
 class Var():
@@ -167,7 +167,7 @@ class App(): # acu1 = App("acu", 1, acu_var_dict, "acu_code")
 		
 		for key, value in dic.items():
 			setattr(self, key, Var(ref=value["ref"], name=value["name"], description=value["description"], value=value["value"], units=value["units"], last_change=value["last_change"], local_log=value["local_log"]))
-			setattr(self, key+"_value", value["value"])
+			#setattr(self, key+"_value", value["value"])
 
 
 
@@ -259,32 +259,50 @@ for key, value in dgu_apps.items():
 
 
 # Example of how to set App Var objects to DGP IO objects
-for acu, AppObject in acu_apps.items():
-	#print(acu)
-	for vars, VarObject in AppObject.__dict__.items():
-		#print(VarObject)
-		#for key in VarObject:
-			#print(key)
-			pass
+#for dgu, dgu_object in dgu_apps.items():
+	#print(dgu_object)
+	#for dgu_vars, io_object in dgu_object.__dict__.items():
+		#print(io_object)
+		#for key in io_object:
+			#print(io_object[key])
 
 
 
-		#print(value.__dict__)
-		#print()
-		#for key3 in value2.__dict__:
-		#	print(key3)
-	#print(value.vScheduleStateLocal.value)
-	# need to know how to iterate App IO objects
-	# learn to do it in the global space first
-
-#for key, value in acu_apps.__dict__.items():
-#	print(key)
+for dgu, dgu_object in dgu_apps.items():
+	#for key, value in dgu_object.__dict__.items(): # to only return iter items
+	for key, value in vars(dgu_object).items(): # There is a function that exposes the __dict__ method. It's equivalent, but probably more pythonic. The vars built-in function 
+		print(key, value)
 
 
+im here in my review - https://codereview.stackexchange.com/questions/126100/recording-all-instances-of-a-class-python/225775
+trying to iterate over the instantiated class to find App Vars that need to be updated by DGU IO
+think the issue is the way i'm iterating or the way it's stored in the Var and IO Class instance.
+
+also saw this:
+if __name__ == "main": which is good practice (it is used to execute some code only if the file was run directly, and not imported)
 
 
-#for key in stat1.__dict__:
-#	print(key)
+
+class A(object):
+    def __init__(self):
+        self.myinstatt1 = 'one'
+        self.myinstatt2 = 'two'
+    def mymethod(self):
+        pass
+
+a = A()
+#for attr, value in a.__dict__.iteritems():
+for attr, value in a.__dict__.items():
+    print(attr, value)
+
+
+for k, v in vars(a).items():
+    print(k, v)
+
+
+
+
+
 
 
 
@@ -300,7 +318,7 @@ for acu, AppObject in acu_apps.items():
 #acu_apps["acu1"].vReturnTempConditionedValue.value = dgu_apps["dgu1"].iReturnTemp.value
 #print(acu_apps["acu1"].vReturnTempConditionedValue.value)
 
-# Example ofinstantiated class from global namespace 
+# Example of instantiated class in global namespace 
 acu1 = App("acu", 1, acu_var_dict, "acu_code")
 acu2 = App("acu", 2, acu_var_dict, "acu_code")
 stat1 = DGU("stat", 1, stat1_io_dict, "acu_code")
@@ -308,13 +326,38 @@ stat2 = DGU("stat", 2, stat1_io_dict, "acu_code")
 
 
 
-for var, var_object in acu1.__dict__.items():
-	print(var_object)
-	#for key in var_object:
-		#print(key)
+
+for var, var_object in stat1.__dict__.items():
+	#print(var_object)
+	#print([a for a in dir(var) if not a.startswith('0')])
+	#print([a for a in dir(var_object) if a.startswith('__main__.Var object')])
+	#if var_object.startswith('__main__.IO object'): 
+		#print(var_object)
+	#for a in dir(var_object):
+		#print(a)
+		#if not a.startswith('__'):
+			pass
+			#print(a)
+
+
+for key in dir(stat1):
+	#print(key)
+	if not key.startswith("__") and not key.startswith("app") and not key.startswith("code") and not key.startswith("ref"):
+		#print(stat1.key)
+		pass
 
 
 
+
+
+
+
+
+
+
+
+
+#print([a for a in dir(acu1) if not a.startswith('ref') and not a.startswith('__')])
 
 
 
