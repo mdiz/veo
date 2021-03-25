@@ -13,6 +13,18 @@ acu_io_dict = {
 "oEconomizerEnable":{"ref":2, "name":"oEconomizerEnable", "description":"Economizer Enable", "value":9999, "units":95, "last_change":1234, "local_log":0},
 }
 
+# local_log will be dict with COV values throttled to 1 minute and 5 minute heatbeat.  Entries older than X will be deleted
+
+# 1 - Copy IO.inputs and IO.outputs value to var_dict
+# 1.a - Process var_dict.last_change and var_dict.local_log
+# 2 - Copy var_dict.value to var
+# 3 - Run code
+# 4 - Copy var value to var_dict.value
+# 4.a - Process var_dict.last_change and var_dict.local_log
+# 5 - Copy var_dict.dict to IO.outputs value
+
+
+
 acu_var_dict = {
 "vReturnTempConditionedValue":{"ref":1, "name":"vReturnTempConditionedValue", "description":"Return Temperature Conditioned Value", "value":70.863, "units":64, "last_change":1234, "local_log":0},
 "vSupplyTempConditionedValue":{"ref":2, "name":"vSupplyTempConditionedValue", "description":"Supply Temperature Conditioned Value", "value":66.863, "units":64, "last_change":1234, "local_log":0},
