@@ -8,8 +8,11 @@ from dgu_dict import dgu_var_dict
 from setup import acu_setup_dict
 from setup import dgu_setup_dict
 
+
+
 # Need group name for DGU, ACU, ARC, PFC...
 	# applications
+
 
 
 class DGU(): # acu1 = App("acu", 1, acu_var_dict, "acu_code")
@@ -41,10 +44,6 @@ class DGU(): # acu1 = App("acu", 1, acu_var_dict, "acu_code")
 			return cls(app, ref, acu_var_dict, "acu_code")
 		elif app == "arc":
 			return cls(app, ref, arc_var_dict, "arc_code")
-	
-
-# UPDATE - HAVE dgu_apps DICT SET TO A CLASS DICT.  THEN WE COULD ACCESS IT FROM GLOBAL SPACE
-
 
 	@classmethod
 	def app_factory(cls):
@@ -79,9 +78,57 @@ class DGU(): # acu1 = App("acu", 1, acu_var_dict, "acu_code")
 DGU.app_factory()
 #print(dgu_apps)
 #print(acu_apps)
-#print(acu_apps["acu1"])
+print(acu_apps["acu1"])
 
+class App(): # acu1 = App("acu", 1, acu_var_dict, "acu_code")
+	def __init__(self, app, ref, dic, code):
+		self._app = app
+		self._ref = ref
+		#setattr(self, "dic", Var2(dic=dic))
+		
+		importlib = __import__('importlib')
+		self._code = importlib.import_module(code)
+		
+		for key, value in dic.items():
+			#setattr(self, key+"_value", Var2(ref=value["ref"], name=value["name"], description=value["description"], value=value["value"], units=value["units"], last_change=value["last_change"], local_log=value["local_log"]))
+			setattr(self, key, value["value"])
+			setattr(self, key+"_value", value)
+
+	def __repr__(self):
+		return f"{self._app}{self._ref} {App}"
+
+	def print_message(self):
+		self._code.acu_fan_def(self,f"It Worked for {self._app}{self._ref}")
+
+	@classmethod
+	def create_dgu(cls, app, ref):
+		return cls(app, ref, dgu_var_dict, "acu_code")
+
+	@classmethod
+	def create_acu(cls, app, ref):
+		return cls(app, ref, acu_var_dict, "acu_code")
+
+
+# Example using a library to instantiate class
+# THESE CAN BE CLASS METHODS USED TO CREATE THE INSTANCE
 """
+dgu_apps = {}
+for key, value in dgu_app_dict.items():
+	app_name = value['app']+str(value['ref'])
+	#app = App(value['app'], value['ref'], dgu_var_dict, "acu_code")
+	app = DGU.create_dgu(value['app'], value['ref'])
+	dgu_apps[app_name] = app
+
+acu_apps = {}
+for key, value in acu_app_dict.items():
+	app_name = value['app']+str(value['ref'])
+	#app = App(value['app'], value['ref'], acu_var_dict, "acu_code")
+	app = App.create_acu(value['app'], value['ref'])
+	acu_apps[app_name] = app
+"""
+
+
+
 # Example of how to access from list
 for key, value in acu_apps.items():
 	#print(key, value)
@@ -137,4 +184,3 @@ for key, value in dgu_apps.items():
 						print(value.oFanEnable)
 						pass
 	print()
-"""
