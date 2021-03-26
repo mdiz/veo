@@ -1,17 +1,3 @@
-acu_io_dict = {
-"iReturnTemp":{"ref":1, "name":"iReturnTemp", "description":"Return Temperature", "value":9999, "units":64, "last_change":1234, "local_log":0},
-"iSupplyTemp":{"ref":2, "name":"iSupplyTemp", "description":"Supply Temperature", "value":9999, "units":64, "last_change":1234, "local_log":0},
-"iSpaceTemp_ScheduleOverride":{"ref":3, "name":"iSpaceTemp_ScheduleOverride", "description":"Space Temperature", "value":9999, "units":64, "last_change":1234, "local_log":0},
-"iUnitAmperage":{"ref":4, "name":"iUnitAmperage", "description":"Unit Amperage", "value":9999, "units":3, "last_change":1234, "local_log":0},
-"iLocalTempAdjust":{"ref":5, "name":"iLocalTempAdjust", "description":"Local Space Temperature Adjustment", "value":9999, "units":64, "last_change":1234, "local_log":0},
-"iAuxUnitStatus":{"ref":6, "name":"iAuxUnitStatus", "description":"Aux Unit Status", "value":9999, "units":64, "last_change":1234, "local_log":0},
-"oFanEnable":{"ref":1, "name":"oFanEnable", "description":"Fan Enable", "value":9999, "units":95, "last_change":1234, "local_log":0},
-"oCompressor1Enable":{"ref":2, "name":"oCompressor1Enable", "description":"Compressor 1 Enable", "value":9999, "units":95, "last_change":1234, "local_log":0},
-"oCompressor2Enable":{"ref":3, "name":"oCompressor2Enable", "description":"Compressor 2 Enable", "value":9999, "units":95, "last_change":1234, "local_log":0},
-"oHeat1Enable":{"ref":4, "name":"oHeat1Enable", "description":"Heat 1 Enable", "value":9999, "units":95, "last_change":1234, "local_log":0},
-"oHeat2Enable":{"ref":1, "name":"oHeat2Enable", "description":"Heat 2 Enable", "value":9999, "units":95, "last_change":1234, "local_log":0},
-"oEconomizerEnable":{"ref":2, "name":"oEconomizerEnable", "description":"Economizer Enable", "value":9999, "units":95, "last_change":1234, "local_log":0},
-}
 
 # local_log will be dict with COV values throttled to 1 minute and 5 minute heatbeat.  Entries older than X will be deleted
 
