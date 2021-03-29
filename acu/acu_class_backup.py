@@ -283,7 +283,12 @@ class App2(): # acu1 = App("acu", 1, acu_var_dict, "acu_code")
 # ACU1.AV1_Configuration.value
 # ACU1.AV1 - updated before and after each program scan
 
-
+#ME.CFG1_Node_Instance.value
+#DEV5000.CFG1_Time_Sync_String
+#ME.CFG1_Firmware_Version.value
+#ME.CFG1_Serial_Number.value
+#ME.CFG1_Model.value
+#ME.CFG1_CPU_Usage_Lua_Script.value 
 
 
 
