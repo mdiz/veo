@@ -22,38 +22,7 @@ from pymodbus.client.sync import ModbusTcpClient as ModbusTCPClient
 from pymodbus.compat import iteritems
 import re
 
-
-def fn_module_def():
-	#import re
-	#OPENING FILES 595
-	#REGULAR EXPERSSIONS line 1746
-	try:
-		with open("deviceconfig.txt") as file: # with statement will allways close the file, even on error 
-			for line in file:
-				#if not re.match(r"^#.*", line):
-				setting=re.match(r"(^[a-zA-Z][\w]+)([\s]*=[\s]*)([\w\d]+).*$", line)
-				if setting:
-					i = setting.group(1)
-					v = setting.group(3)
-					print(i, v)
-		file.close() 
-	except:
-		print("fn_module_def failed")
-
-
-def fn_serial_port_list(): # Print current conected comports
-	#my_port="/dev/ttyUSB0"
-	try:
-		import serial.tools.list_ports
-		comport=[comport.device for comport in serial.tools.list_ports.comports()]
-		if comport:
-			my_port=comport[0]
-
-	except:
-		print("Error: fn_serial_port_list")
-	
-	return my_port
-
+from dgu_dict import dgu_var_dict
 
 def fn_rtu_scan(my_start=1, my_stop=256, my_timeout=0.1,my_baudrate=9600):
 	client = ModbusClient(method='rtu', port=fn_serial_port_list(), timeout=my_timeout, baudrate=my_baudrate)
@@ -74,21 +43,65 @@ def fn_rtu_scan(my_start=1, my_stop=256, my_timeout=0.1,my_baudrate=9600):
 	return list
 
 
-def fn_tcp_scan(my_start=1, my_stop=256, my_port=502, my_timeout=0.05):
-	list=[]
-	for i in range(my_start,my_stop):
-		#print("192.168.11." + str(i))
-		client = ModbusTCPClient("192.168.11." + str(i), my_port, timeout=my_timeout)
-		client.connect()
+def fn_serial_port_list(): # Print current conected comports
+	#my_port="/dev/ttyUSB0"
+	#try:
+	import serial.tools.list_ports
+	comport=[comport.device for comport in serial.tools.list_ports.comports()]
+	if comport:
+		my_port=comport[0]
 
-		if client.connect():
-			list.append("192.168.11." + str(i))
-
-		client.close()
+	#except:
+		#print("Error: fn_serial_port_list")
 	
-	return list
+	return my_port
+
+
+def fn_read_VeoStat_1(my_unit, my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):
+	client = ModbusClient(method='rtu', port=my_port, timeout=my_timeout, baudrate=my_baudrate)
+	client.connect()
+	
+	if client.connect():
+
+		#print("\nReading 32bit Registers " + "-" * 60)
+		#rr = client.read_input_registers(1000, 38, unit=my_unit) # Read 32bit float values.
+		#fn_decode_float(rr.registers)
+
+		#print("\nReading 16bit Registers " + "-" * 60)
+		rr = client.read_input_registers(2000, 41, unit=my_unit) # Read 16bit values.
+
+	
+	client.close()
+
+	for i in rr.registers:
+		print(i)
+
+	
+
+def fn_decode_float(list):
+	#use range() to build list to search by?
+	length=len(list)
+	for i, val in enumerate(list): 
+		if i * 2 < length:
+			i=i*2
+			y=i+1
+			tmpReg=[list[i],list[y]]
+			decoder = BinaryPayloadDecoder.fromRegisters(tmpReg,byteorder=Endian.Big,wordorder=Endian.Little)
+			my_value=decoder.decode_32bit_float()
+			print(my_value)
 
 
 
 
-print(fn_serial_port_list())
+
+fn_read_VeoStat_1(5)
+
+
+
+#rtu_list = fn_rtu_scan(my_stop=30, my_timeout=0.1)
+
+#for key in rtu_list:
+	#print(key)
+
+
+

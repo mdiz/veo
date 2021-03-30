@@ -33,7 +33,7 @@ class DGU(): # acu1 = App("acu", 1, acu_var_dict, "acu_code")
 		self._code.acu_fan_def(self,f"It Worked for {self._app}{self._ref}")
 
 	@classmethod
-	def create_app(cls, app, ref):
+	def create_app(cls, app, ref): # Used to create instance of class
 		#dgu1 = DGU.create_dgu("dgu", 1)
 		if app == "dgu":
 			return cls(app, ref, dgu_var_dict, "dgu_code")
@@ -47,7 +47,7 @@ class DGU(): # acu1 = App("acu", 1, acu_var_dict, "acu_code")
 
 
 	@classmethod
-	def app_factory(cls):
+	def app_factory(cls): # Used to create instance and store in dict
 		#dgu_var_dict - dict of vars
 		#dgu_setup_dict - setup dict, DGU apps to create
 		#dgu_apps  - dict of instances
