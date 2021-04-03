@@ -258,35 +258,35 @@ def ranges(nums):
 	edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
 	return list(zip(edges, edges))
 
-def register_read_pattern():
-	""" Returns register read patterns from list of registers """
-	init16_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"] # list of init16 registers
-	my_range = ranges(init16_registers) # list of consecutive numbers
-	return my_range
-
-
-
-
-
-
-
 
 init16_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"]
+init16_registers2 = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"]
 float32_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Float32"]
-#print(init16_registers)
-#print(float32_registers)
+print(f"init16_registers are {init16_registers}")
 
 my_range = ranges(init16_registers) # Use ranges() find consecutive numbers in list
-#print(f"my_range results are {my_range}")
+print(f"my_range results are {my_range}")
 
+test = []
 for k,v in my_range:
 	#print(k,v)
-	register_start = k - 1
-	register_count = v - register_start
-	print(register_start, register_count)
-	pass
-register_get = [v for v in my_range]
-#print(register_get)
+	k = k - 1
+	v = v - k
+	#print(k, v)
+	print(k, v)
+	test.append((k, v))
+
+print(test) # list of register_start and register_count values
+# [(2000, 41), (6566, 1)] 
+
+
+
+for k, v in test:
+	#print(k, v)
+	x = (list(range(k+1, k + v + 1)))
+	print(x)
+
+
 
 
 

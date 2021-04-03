@@ -26,6 +26,7 @@ import time
 #from dgu_dict import dgu_var_dict
 
 def fn_rtu_scan(my_start=1, my_stop=256, my_timeout=0.1,my_baudrate=9600):
+	"""Scan for RTU devices"""
 	client = ModbusClient(method='rtu', port=fn_serial_port_list(), timeout=my_timeout, baudrate=my_baudrate)
 	client.connect()
 	error=0
@@ -44,22 +45,24 @@ def fn_rtu_scan(my_start=1, my_stop=256, my_timeout=0.1,my_baudrate=9600):
 	return list
 
 
-def fn_serial_port_list(): # Print current conected comports
-	port = "/dev/ttyUSB0"
+def fn_serial_port_list():
+	"""Return list of available serial ports"""
+	#port = "/dev/ttyUSB0"
+	# UPDATE add try: method to escape error
 	import serial.tools.list_ports
 	comport=[comport.device for comport in serial.tools.list_ports.comports()]
 	if comport:
 		port=comport[0]
 	return port
 
-
-
 def connect_rtu(my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):
+	"""Connect to first available serial port with RTU protocol"""
 	client = ModbusClient(method='rtu', port=my_port, timeout=my_timeout, baudrate=my_baudrate)
 	client.connect()
 	return client
 
 def write_dgu_rtu(self):
+	# UPDATE this needs work
 	client = connect_rtu()
 	if client.connect():
 
@@ -75,12 +78,51 @@ def write_dgu_rtu(self):
 					pass
 	client.close()
 
-
 def check_result(count, object):
+	"""Check object based length"""
 	x = 0
 	if len(object) == count:
 		x = 1
 	return x
+
+def ranges(nums):
+	""" Returns consecutive numbers from a list"""
+	nums = sorted(set(nums))
+	gaps = [[s, e] for s, e in zip(nums, nums[1:]) if s+1 < e]
+	edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
+	return list(zip(edges, edges))
+
+def merge_list(list1, list2):
+	""" Merge two lists into list of tuples"""
+    result = [(list1[i], list2[i]) for i in range(0, len(list1))]
+    return result
+
+def register_init16_read_pattern(self):
+	""" Returns register read patterns from list of registers """
+	init16_registers = [v["register"] for v in self._dict.values() if v["format"] == "Init16"] # list of init16 registers in dgu_dict
+	patterns = ranges(init16_registers) # list of consecutive registers
+	read_patterns = []
+	for k,v in patterns: # Converts patterns for modbus read function
+		k = k - 1
+		v = v - k
+		read_pattern.append((k, v))
+	return read_patterns
+
+
+
+def update_dgu(self):
+# need function to build list or dict that will run read_init16_rtu and pair its result with register number for writing to dgu_dict
+	read_patterns = register_init16_read_pattern(self)
+	for register_start, register_count in read_patterns:
+		read_result, check = read_init16_rtu(register_start, register_count)
+		if check == 1:
+			registers = (list(range(register_start + 1, register_start + register_count + 1))) # build list of registers
+			update_list = merge_list(registers, read_result) # combine return of read_patterns with return of read_init16_rtu() into paired list to update dgu_dict 
+			# use update_list to update dgu_dict
+
+
+
+
 
 
 
@@ -89,6 +131,8 @@ def read_init16_rtu(self, register_start, register_count, my_port=fn_serial_port
 	x = 0
 	try:
 		rr = client.read_input_registers(2000, 41, unit = self._mbus_rtu) # Read 16bit values.
+
+		# may need to sleep here
 
 		x = check_result(41,rr.registers)
 
