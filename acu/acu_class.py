@@ -287,7 +287,8 @@ print(test[0])
 
 dgu1._code.update_dgu(dgu1)
 
-
+for k, v in dgu1._dict.items():
+	print(v.name, v.value)
 
 
 min_Float32_register = [min(int(d['register']) for d in dgu1._dict.values() if d['format'] == 'Float32')]

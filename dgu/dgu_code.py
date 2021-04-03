@@ -105,14 +105,14 @@ def register_init16_read_pattern(self):
 	for k,v in patterns: # Converts patterns for modbus read function
 		k = k - 1
 		v = v - k
-		read_pattern.append((k, v))
+		read_patterns.append((k, v))
 	return read_patterns
 
 def update_dgu(self):
 # need function to build list or dict that will run read_init16_rtu and pair its result with register number for writing to dgu_dict
 	read_patterns = register_init16_read_pattern(self) # list of tuples containing register start and register count for each series of registers in dgu_dict
 	for register_start, register_count in read_patterns:
-		read_result, check = read_init16_rtu(register_start, register_count) # read registers from dgu
+		read_result, check = read_init16_rtu(self, register_start, register_count) # read registers from dgu
 		if check == 1:
 			registers = (list(range(register_start + 1, register_start + register_count + 1))) # build list of registers
 			# UPDATE there may be a safer way to do this https://www.geeksforgeeks.org/python-merge-two-lists-into-list-of-tuples/
