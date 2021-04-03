@@ -47,7 +47,7 @@ def fn_rtu_scan(my_start=1, my_stop=256, my_timeout=0.1,my_baudrate=9600):
 
 def fn_serial_port_list():
 	"""Return list of available serial ports"""
-	#port = "/dev/ttyUSB0"
+	port = "/dev/ttyUSB0"
 	# UPDATE add try: method to escape error
 	import serial.tools.list_ports
 	comport=[comport.device for comport in serial.tools.list_ports.comports()]
@@ -94,8 +94,8 @@ def ranges(nums):
 
 def merge_list(list1, list2):
 	""" Merge two lists into list of tuples"""
-    result = [(list1[i], list2[i]) for i in range(0, len(list1))]
-    return result
+	result = [(list1[i], list2[i]) for i in range(0, len(list1))]
+	return result
 
 def register_init16_read_pattern(self):
 	""" Returns register read patterns from list of registers """
@@ -108,33 +108,30 @@ def register_init16_read_pattern(self):
 		read_pattern.append((k, v))
 	return read_patterns
 
-
-
 def update_dgu(self):
 # need function to build list or dict that will run read_init16_rtu and pair its result with register number for writing to dgu_dict
-	read_patterns = register_init16_read_pattern(self)
+	read_patterns = register_init16_read_pattern(self) # list of tuples containing register start and register count for each series of registers in dgu_dict
 	for register_start, register_count in read_patterns:
-		read_result, check = read_init16_rtu(register_start, register_count)
+		read_result, check = read_init16_rtu(register_start, register_count) # read registers from dgu
 		if check == 1:
 			registers = (list(range(register_start + 1, register_start + register_count + 1))) # build list of registers
-			update_list = merge_list(registers, read_result) # combine return of read_patterns with return of read_init16_rtu() into paired list to update dgu_dict 
-			# use update_list to update dgu_dict
-
-
-
-
-
-
+			# UPDATE there may be a safer way to do this https://www.geeksforgeeks.org/python-merge-two-lists-into-list-of-tuples/
+			update_list = merge_list(registers, read_result) # combine read_patterns with return of read_init16_rtu() into list of tuples to update dgu_dict 
+			# UPDATE should this be another function?
+			for key, value in self._dict.items(): # use update_list to update dgu_dict
+				for register, result in update_list:
+					if value.register == register:
+						value.value = result 
 
 def read_init16_rtu(self, register_start, register_count, my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):
 	client = connect_rtu()
 	x = 0
 	try:
-		rr = client.read_input_registers(2000, 41, unit = self._mbus_rtu) # Read 16bit values.
+		rr = client.read_input_registers(register_start, register_count, unit = self._mbus_rtu) # Read 16bit values.
 
-		# may need to sleep here
+		time.sleep(1)
 
-		x = check_result(41,rr.registers)
+		x = check_result(register_count,rr.registers)
 
 	except (AttributeError, pymodbus.exceptions.ModbusIOException):
 		print("DGU not found. DGU did not respond to network request")

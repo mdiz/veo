@@ -279,14 +279,13 @@ for k,v in my_range:
 print(test) # list of register_start and register_count values
 # [(2000, 41), (6566, 1)] 
 
-
-
+print(f"test result is {test[0]}")
 for k, v in test:
-	#print(k, v)
-	x = (list(range(k+1, k + v + 1)))
-	print(x)
+	#print(k,v)
+	print(f"register is {k} and value is {v}")
+print(test[0])
 
-
+dgu1._code.update_dgu(dgu1)
 
 
 
