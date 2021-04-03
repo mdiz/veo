@@ -20,7 +20,9 @@ from pymodbus.payload import BinaryPayloadBuilder
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 from pymodbus.client.sync import ModbusTcpClient as ModbusTCPClient
 from pymodbus.compat import iteritems
+import pymodbus.exceptions
 import re
+import time
 #from dgu_dict import dgu_var_dict
 
 def fn_rtu_scan(my_start=1, my_stop=256, my_timeout=0.1,my_baudrate=9600):
@@ -57,7 +59,7 @@ def connect_rtu(my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):
 	client.connect()
 	return client
 
-def write_dgu(self):
+def write_dgu_rtu(self):
 	client = connect_rtu()
 	if client.connect():
 
@@ -74,71 +76,99 @@ def write_dgu(self):
 	client.close()
 
 
+def check_result(count, object):
+	x = 0
+	if len(object) == count:
+		x = 1
+	return x
 
 
-import pymodbus.exceptions
 
-def read_dgu(self):
-# if no connection to comm port then 
-#raise ConnectionException("Failed to connect[%s]" % (self.__str__()))
-#pymodbus.exceptions.ConnectionException: Modbus Error: [Connection] Failed to connect[ModbusSerialClient(rtu baud[9600])]
-#float_registers = client.read_input_registers(1000, 38, unit = self._mbus_rtu) # Read 32bit float values
+def read_init16_rtu(self, register_start, register_count, my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):
+	client = connect_rtu()
+	x = 0
+	try:
+		rr = client.read_input_registers(2000, 41, unit = self._mbus_rtu) # Read 16bit values.
 
-# if device is not present then
-#AttributeError: 'ModbusIOException' object has no attribute 'registers'
-#float_registers = fn_decode_float2(float_registers.registers) # Decode 32bit float values  # fails here if no device 
+		x = check_result(41,rr.registers)
 
+	except (AttributeError, pymodbus.exceptions.ModbusIOException):
+		print("DGU not found. DGU did not respond to network request")
+		x = 0
+
+	except (pymodbus.exceptions.ConnectionException):
+		print("Commport connection failed.")
+		x = 0
+
+	except IndexError:
+		print("DGU response does not match request")
+		x = 0
+
+	finally:
+		client.close()
+
+	return rr.registers, x
+
+
+
+
+
+def read_dgu_rtu(self):
 	client = connect_rtu()
 	#if client.connect():
-
+	x = 0
 	try:
-
 		float_registers = client.read_input_registers(1000, 38, unit = self._mbus_rtu) # Read 32bit float values
 		float_registers = fn_decode_float2(float_registers.registers) # Decode 32bit float values  # fails here if no device 
 
 		rr = client.read_input_registers(2000, 41, unit = self._mbus_rtu) # Read 16bit values.
 		tt = client.read_input_registers(6566, 1, unit = self._mbus_rtu) # Read TemplateID
 
+		time.sleep(1)
+
+		x = check_result(41,rr.registers) * check_result(1,tt.registers) * check_result(38 // 2,float_registers)
+
 		# UPDATE  THINK ABOUT DEFAULT VALUE FOR KEY IF SCAN RETURNS VALUES BUT SOME ARE MISSING
 		# UPDATE  GUARD AGAINST FAILED SCANS
 		# UPDATE GUARD AGAINST SCANS THAT RETURN NUMBER OF VALUES THAT DONT MATCH THE NUMBER OF KEYS
 		# UPDATE INCLUDE TIME STAMP FOR HEARTBEAT
+
+
+##### UPDATE #######  WE SHOULD HAVE THESE FUNCTIONS JUST RETURN THE VALUE LIST.  THEN PROCESS THE RESULTS IN AN INSTANCE FUNCTION TO ADD last_change AND local_log
+
+
 
 		count = 0
 		for key, value in self._dict.items():
 			if value.format == "Float32" and value.register <= 1038 and count <= len(float_registers):  # fails here if no connection
 				value.value = float_registers[count]
 				count += 1
-				pass
-
+				
 		count = 0
 		for key, value in self._dict.items():
 			if value.format == "Init16" and value.register <= 2041 and count <= len(rr.registers):
 				value.value = rr.registers[count]
 				count += 1
-				pass
 			elif value.format == "Init16" and value.register == 6567:
 				value.value = tt.registers[0]
 
-	#except ConnectionException:
-	#	print("ConnectionException")
+	except (AttributeError, pymodbus.exceptions.ModbusIOException):
+		print("DGU not found. DGU did not respond to network request")
+		x = 0
 
-#Different exceptions are raised for different reasons.
-#Common exceptions:
-#ImportError: an import fails;
-#IndexError: a list is indexed with an out-of-range number;
-#NameError: an unknown variable is used;
-#SyntaxError: the code can't be parsed properly;
-#TypeError: a function is called on a value of an inappropriate type;
-#ValueError: a function is called on a value of the correct type, but with an inappropriate value.
+	except (pymodbus.exceptions.ConnectionException):
+		print("Commport connection failed.")
+		x = 0
 
-#Python has several other built-in exceptions, such as ZeroDivisionError and OSError. Third-party libraries also often define their own exceptions.
-
-	except (pymodbus.exceptions.ConnectionException, pymodbus.exceptions.ModbusIOException):
-		print("It Failed")
+	except IndexError:
+		print("DGU response does not match request")
+		x = 0
 
 	finally:
 		client.close()
+
+	return x
+
 
 
 def fn_read_VeoStat_1(self, my_dict, my_unit, my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):

@@ -14,25 +14,32 @@ from setup import dgu_setup_dict
 
 
 class AttrDict(dict):
-    """ Dictionary subclass whose entries can be accessed like attributes
-        (as well as normally).
-        https://stackoverflow.com/questions/38034377/object-like-attribute-access-for-nested-dictionary
-    """
-    def __init__(self, *args, **kwargs):
-        super(AttrDict, self).__init__(*args, **kwargs)
-        self.__dict__ = self
+	""" Dictionary subclass whose entries can be accessed like attributes
+		(as well as normally).
+		https://stackoverflow.com/questions/38034377/object-like-attribute-access-for-nested-dictionary
+	"""
+    
+	def __init__(self, *args, **kwargs):
+		super(AttrDict, self).__init__(*args, **kwargs)
+		self.__dict__ = self
 
-    @staticmethod
-    def from_nested_dicts(data):
-        """ Construct nested AttrDicts from nested dictionaries. """
-        if not isinstance(data, dict):
-            return data
-        else:
-            return AttrDict({key: AttrDict.from_nested_dicts(data[key])for key in data})
+	def format_var_dict(var_dict):
+		""" Adds additional keys and initial values to var_dicts 
+			durring init.
+		"""
+		for key, value in var_dict.items():
+			value.last_change = 0 # UPDATE set this to a time
+			value.local_log = []
+			value.last_update = 0 # UPDATE set this to a time
+		return var_dict
 
-#data1 = AttrDict.from_nested_dicts(dgu_var_dict)
-#print(data1.iSpaceTemp.register)
-#print(data1["iSpaceTemp"]["register"])
+	@staticmethod
+	def from_nested_dicts(data):
+		""" Construct nested AttrDicts from nested dictionaries. """
+		if not isinstance(data, dict):
+			return data
+		else:
+			return AttrDict({key: AttrDict.from_nested_dicts(data[key])for key in data})
 
 
 
@@ -41,25 +48,29 @@ class DGU(): # acu1 = App("acu", 1, acu_var_dict, "acu_code")
 		self._app = app
 		self._ref = ref
 		self._mbus_rtu = mbus_rtu
-		self._dict = AttrDict.from_nested_dicts(dict)
-		#self._dict = dict # this does not create a new object
-		#self._dict = dgu_var_dict.copy() # this does create a new object
-		#setattr(self, "_dict", dict) # this does not create a new object
-		#setattr(self, "dict", Var2(dict=dict))
+		self._dict = AttrDict.format_var_dict(AttrDict.from_nested_dicts(dict))
 		
 		importlib = __import__('importlib')
 		self._code = importlib.import_module(code)
 		
 		for key, value in dict.items():
-			#setattr(self, key+"_value", Var2(ref=value["ref"], name=value["name"], description=value["description"], value=value["value"], units=value["units"], last_change=value["last_change"], local_log=value["local_log"]))
 			setattr(self, key, value["value"])
-			#setattr(self, key+"_value", value)
 
 	#def __repr__(self):
 		#return f"{self._app}{self._ref} {DGU}"
-
+	
 	def print_message(self):
 		self._code.acu_fan_def(self,f"It Worked for {self._app}{self._ref}")
+
+	def update_dgu(self):
+		""" Reads IO from DGU and sets var_dict values.
+			Returns 1 for success or 0 for failure.			
+		"""
+		result = self._code.read_dgu_rtu(self)
+		#if result == 1:
+		#	for key, value in self._dict.items():
+		#		value.rec_time = 0 # UPDATE set this to a time
+		return result
 
 	@classmethod
 	def create_app(cls, app, ref, mbus_rtu): # Used to create instance of class
@@ -211,32 +222,123 @@ for key, value in acu_apps.items():
 
 
 #DGU(self, app, ref, mbus_rtu, dict, code)
-dgu1 = DGU("dgu", 1, 7, dgu_var_dict, "dgu_code")
+dgu1 = DGU("dgu", 1, 5, dgu_var_dict, "dgu_code")
 dgu2 = DGU("dgu", 2, 6, dgu_var_dict, "dgu_code")
 
 
-print("dgu1 vSerialNumber ", dgu1._dict.vSerialNumber.value)
-print("dgu2 vSerialNumber ", dgu2._dict.vSerialNumber.value)
+#print("dgu1 vSerialNumber ", dgu1._dict.vSerialNumber.value)
+#print("dgu2 vSerialNumber ", dgu2._dict.vSerialNumber.value)
 
+#result = dgu1.update_dgu()
+#print(f"read_dgu_rtu(dgu1) result is {result}")
 
-dgu1._code.read_dgu(dgu1)
-#dgu2._code.read_dgu(dgu2)
-
-
-#dgu1._code.write_dgu(dgu1)
-#dgu2._code.write_dgu(dgu2)
-
-
-
-print("dgu1 vSerialNumber ", dgu1._dict.vSerialNumber.value)
-print("dgu2 vSerialNumber ", dgu2._dict.vSerialNumber.value)
-
-for key, value in dgu1._dict.items():
-	print(key, value.value)
+for i in range(1):
+	#result = dgu1.update_dgu() * dgu2.update_dgu()
+	#print(f"read_dgu(dgu1) result is {result}")
 	pass
 
-for key, value in dgu2._dict.items():
+
+for key, value in dgu1._dict.items():
+	#print(key, value)
+	if value.format == "Init16":
+		 pass
+
+
+#print(dgu1._dict.values())
+
+# how do we do this for init16 only
+
+########  clearly we need to understand dictionary comprehension better##########################
+# need to know the min init16 register then the number of consecutive ones 
+
+def ranges(nums):
+	""" Returns consecutive numbers from a list """
+	nums = sorted(set(nums))
+	gaps = [[s, e] for s, e in zip(nums, nums[1:]) if s+1 < e]
+	edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
+	return list(zip(edges, edges))
+
+def register_read_pattern():
+	""" Returns register read patterns from list of registers """
+	init16_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"] # list of init16 registers
+	my_range = ranges(init16_registers) # list of consecutive numbers
+	return my_range
+
+
+
+
+
+
+
+
+init16_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"]
+float32_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Float32"]
+#print(init16_registers)
+#print(float32_registers)
+
+my_range = ranges(init16_registers) # Use ranges() find consecutive numbers in list
+#print(f"my_range results are {my_range}")
+
+for k,v in my_range:
+	#print(k,v)
+	register_start = k - 1
+	register_count = v - register_start
+	print(register_start, register_count)
+	pass
+register_get = [v for v in my_range]
+#print(register_get)
+
+
+
+
+min_Float32_register = [min(int(d['register']) for d in dgu1._dict.values() if d['format'] == 'Float32')]
+min_Init16_register = min(int(d['register']) for d in dgu1._dict.values() if d['format'] == 'Init16')
+
+max_Float32_register = max(int(d['register']) for d in dgu1._dict.values() if d['format'] == 'Float32')
+max_Init16_register = max(int(d['register']) for d in dgu1._dict.values() if d['format'] == 'Init16')
+
+#print(min_Float32_register)
+#print(min_Init16_register)
+
+#print(max_Float32_register)
+#print(max_Init16_register)
+
+
+
+
+
+init16, result = dgu1._code.read_init16_rtu(dgu1, 2000, 41,)
+if result == 1:
+	#print(init16)
+	#print(f"init16 length is {len(init16)}")
+	pass
+
+
+
+
+
+
+#print("dgu1 vSerialNumber ", dgu1._dict.vSerialNumber.value)
+#print("dgu2 vSerialNumber ", dgu2._dict.vSerialNumber.value)
+
+
+#print(dgu1._dict.vSerialNumber.keys())
+
+
+#print(dgu1._dict.vSerialNumber)
+# keys
+# values
+# items
+# update
+# from_nested_dicts
+
+
+for key, value in dgu1._dict.items():
 	#print(key, value.value)
+	pass
+
+for key, value in dgu1._dict.items():
+	#print(key, value.local_log)
 	pass
 
 
