@@ -86,9 +86,16 @@ def check_result(count, object):
 	return x
 
 def ranges(nums):
-	""" Returns consecutive numbers from a list"""
+	""" Returns consecutive numbers from a list """
 	nums = sorted(set(nums))
 	gaps = [[s, e] for s, e in zip(nums, nums[1:]) if s+1 < e]
+	edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
+	return list(zip(edges, edges))
+
+def ranges_float32(nums):
+	""" Returns consecutive numbers from a list of float32 registers"""
+	nums = sorted(set(nums))
+	gaps = [[s, e] for s, e in zip(nums, nums[1:]) if s+2 < e]
 	edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
 	return list(zip(edges, edges))
 
@@ -98,7 +105,7 @@ def merge_list(list1, list2):
 	return result
 
 def register_init16_read_pattern(self):
-	""" Returns register read patterns from list of registers """
+	""" Returns register read patterns from list of init16 registers """
 	init16_registers = [v["register"] for v in self._dict.values() if v["format"] == "Init16"] # list of init16 registers in dgu_dict
 	patterns = ranges(init16_registers) # list of consecutive registers
 	read_patterns = []
@@ -108,28 +115,82 @@ def register_init16_read_pattern(self):
 		read_patterns.append((k, v))
 	return read_patterns
 
-def update_dgu(self):
-# need function to build list or dict that will run read_init16_rtu and pair its result with register number for writing to dgu_dict
+def register_float32_read_pattern(self):
+	""" Returns register read patterns from list of float32 registers """
+	float_registers = [v["register"] for v in self._dict.values() if v["format"] == "Float32"] # list of float32 registers in dgu_dict
+	patterns = ranges_float32(float_registers) # list of consecutive registers
+	read_patterns = []
+	for k,v in patterns: # Converts patterns for modbus read function
+		k = k - 2
+		v = v - k
+		read_patterns.append((k, v))
+	return read_patterns
+
+def fn_decode_float(list):
+	""" Build a list of decoded values and return to call """
+	values = []
+	length=len(list)
+	for i, val in enumerate(list): 
+		if i * 2 < length:
+			i=i*2
+			y=i+1
+			tmpReg=[list[i],list[y]]
+			decoder = BinaryPayloadDecoder.fromRegisters(tmpReg,byteorder=Endian.Big,wordorder=Endian.Little)
+			my_value=decoder.decode_32bit_float()
+			values.append(my_value)
+	return values
+
+def read_dgu(self):
+	""" Builds list of consecutive init16 and float32 registers from dgu_dict, reads DGU registers, updates dgu_dict with return values """
+	update_list = []
 	read_patterns = register_init16_read_pattern(self) # list of tuples containing register start and register count for each series of registers in dgu_dict
 	for register_start, register_count in read_patterns:
 		read_result, check = read_init16_rtu(self, register_start, register_count) # read registers from dgu
 		if check == 1:
 			registers = (list(range(register_start + 1, register_start + register_count + 1))) # build list of registers
 			# UPDATE there may be a safer way to do this https://www.geeksforgeeks.org/python-merge-two-lists-into-list-of-tuples/
-			update_list = merge_list(registers, read_result) # combine read_patterns with return of read_init16_rtu() into list of tuples to update dgu_dict 
-			# UPDATE should this be another function?
-			for key, value in self._dict.items(): # use update_list to update dgu_dict
-				for register, result in update_list:
-					if value.register == register:
-						value.value = result 
+			update_list.extend(merge_list(registers, read_result)) # combine read_patterns with return of read_init16_rtu() into list of tuples to update dgu_dict 
+
+	read_patterns = register_float32_read_pattern(self) # list of tuples containing register start and register count for each series of registers in dgu_dict
+	for register_start, register_count in read_patterns:
+		read_result, check = read_float32_rtu(self, register_start, register_count) # read registers from dgu
+		if check == 1:
+			registers = (list(range(register_start + 2, register_start + register_count + 1, 2))) # build list of registers
+			# UPDATE there may be a safer way to do this https://www.geeksforgeeks.org/python-merge-two-lists-into-list-of-tuples/
+			update_list.extend(merge_list(registers, read_result)) # combine read_patterns with return of read_float32_rtu() into list of tuples to update dgu_dict 
+
+	for key, value in self._dict.items(): # use update_list to update dgu_dict
+		for register, result in update_list:
+			if value.register == register:
+				value.previous_value = value.value
+				value.value = result 
+				value.last_change = 55 # UPDATE this should be cpu time since boot
+				# UPDATE function to update local_log
+				
+
+
+
+def write_dgu(self):
+# WERE HERE IN DEV.  NEED FUNCTION TO WRITE DGU REGISTERS
+# tring to make this work in acu_class file
+# init16_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"] if v["writable"] == ["Yes"]
+# print(init16_registers)
+	pass
+
+
+
+
+
 
 def read_init16_rtu(self, register_start, register_count, my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):
 	client = connect_rtu()
 	x = 0
+	# UPDATE this whole function needs review.
+	# This is our working model we're currently using
 	try:
 		rr = client.read_input_registers(register_start, register_count, unit = self._mbus_rtu) # Read 16bit values.
 
-		time.sleep(1)
+		time.sleep(0.1)
 
 		x = check_result(register_count,rr.registers)
 
@@ -151,7 +212,35 @@ def read_init16_rtu(self, register_start, register_count, my_port=fn_serial_port
 	return rr.registers, x
 
 
+def read_float32_rtu(self, register_start, register_count, my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):
+	client = connect_rtu()
+	x = 0
+	# UPDATE this whole function needs review.
+	# This is our working model we're currently using
+	try:
+		float_registers = client.read_input_registers(1000, 38, unit = self._mbus_rtu) # Read 32bit float values
+		float_registers = fn_decode_float(float_registers.registers) # Decode 32bit float values  # fails here if no device 
 
+		time.sleep(0.1)
+
+		x = check_result(38 // 2,float_registers)
+
+	except (AttributeError, pymodbus.exceptions.ModbusIOException):
+		print("DGU not found. DGU did not respond to network request")
+		x = 0
+
+	except (pymodbus.exceptions.ConnectionException):
+		print("Commport connection failed.")
+		x = 0
+
+	except IndexError:
+		print("DGU response does not match request")
+		x = 0
+
+	finally:
+		client.close()
+
+	return float_registers, x
 
 
 def read_dgu_rtu(self):
@@ -160,7 +249,7 @@ def read_dgu_rtu(self):
 	x = 0
 	try:
 		float_registers = client.read_input_registers(1000, 38, unit = self._mbus_rtu) # Read 32bit float values
-		float_registers = fn_decode_float2(float_registers.registers) # Decode 32bit float values  # fails here if no device 
+		float_registers = fn_decode_float(float_registers.registers) # Decode 32bit float values  # fails here if no device 
 
 		rr = client.read_input_registers(2000, 41, unit = self._mbus_rtu) # Read 16bit values.
 		tt = client.read_input_registers(6566, 1, unit = self._mbus_rtu) # Read TemplateID
@@ -221,21 +310,21 @@ def fn_read_VeoStat_1(self, my_dict, my_unit, my_port=fn_serial_port_list(), my_
 		#rq = client.write_register(2002, 1, unit=my_unit)
 		#rq = client.write_register(2003, 1, unit=my_unit)
 
-		rq = client.write_registers(2002, [0]*5, unit=my_unit)
+		#rq = client.write_registers(2002, [0]*5, unit=my_unit)
 
 		#rq = client.write_register(self._dict.vLCDMessage.register - 1, 0, unit=my_unit)
 		#rq = client.write_registers(self._dict.oFanEnable.register - 1, [1]*5, unit=my_unit)
 
 
 		for key, value in my_dict.items():
-			# run througn writable vars and sent to DGU
+			# run througn writable vars and send to DGU
 			if value.writable == "Yes":
 				#print(value.writable, " is writable")
-				#rq = client.write_register(value.register - 1, value.value, unit=my_unit)
+				rq = client.write_register(value.register - 1, value.value, unit=my_unit)
 				pass
 
 		float_registers = client.read_input_registers(1000, 38, unit=my_unit) # Read 32bit float values
-		float_registers = fn_decode_float2(float_registers.registers) # Decode 32bit float values
+		float_registers = fn_decode_float(float_registers.registers) # Decode 32bit float values
 
 		rr = client.read_input_registers(2000, 41, unit=my_unit) # Read 16bit values.
 		tt = client.read_input_registers(6566, 1, unit=my_unit) # Read TemplateID
@@ -277,24 +366,7 @@ def fn_read_VeoStat_1(self, my_dict, my_unit, my_port=fn_serial_port_list(), my_
 
 
 # build a list of decoded values and return to call
-def fn_decode_float2(list):
-	#use range() to build list to search by?
-	values = []
-	length=len(list)
-	for i, val in enumerate(list): 
-		if i * 2 < length:
-			i=i*2
-			y=i+1
-			tmpReg=[list[i],list[y]]
-			decoder = BinaryPayloadDecoder.fromRegisters(tmpReg,byteorder=Endian.Big,wordorder=Endian.Little)
-			my_value=decoder.decode_32bit_float()
-			values.append(my_value)
-			#print(my_value)
-			#print(decoder)
-			#print(tmpReg)
-	return values
-
-def fn_decode_float(list):
+def fn_decode_floatTest(list):
 	#use range() to build list to search by?
 	length=len(list)
 	for i, val in enumerate(list): 

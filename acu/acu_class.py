@@ -226,6 +226,9 @@ dgu1 = DGU("dgu", 1, 5, dgu_var_dict, "dgu_code")
 dgu2 = DGU("dgu", 2, 6, dgu_var_dict, "dgu_code")
 
 
+#dgu1._code.fn_read_VeoStat_1(dgu1, dgu1._dict, dgu1._mbus_rtu)
+
+
 #print("dgu1 vSerialNumber ", dgu1._dict.vSerialNumber.value)
 #print("dgu2 vSerialNumber ", dgu2._dict.vSerialNumber.value)
 
@@ -244,12 +247,21 @@ for key, value in dgu1._dict.items():
 		 pass
 
 
+
 #print(dgu1._dict.values())
 
 # how do we do this for init16 only
 
 ########  clearly we need to understand dictionary comprehension better##########################
 # need to know the min init16 register then the number of consecutive ones 
+
+
+
+#registersTest = (list(range(register_start + 2, register_start + register_count + 1, 2))) 
+#registersTest = (list(range(1000 + 2, 1000 + 38 + 1, 2))) 
+#for i in range(0, len(a), 2):
+#print(f"registersTest is {registersTest}")
+
 
 def ranges(nums):
 	""" Returns consecutive numbers from a list """
@@ -258,19 +270,29 @@ def ranges(nums):
 	edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
 	return list(zip(edges, edges))
 
+def ranges_float32(nums):
+	""" Returns consecutive numbers from a list """
+	nums = sorted(set(nums))
+	gaps = [[s, e] for s, e in zip(nums, nums[1:]) if s+2 < e]
+	edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
+	return list(zip(edges, edges))
 
-init16_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"]
-init16_registers2 = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"]
+
+#init16_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"]
+# not working with more than one if statement
+#init16_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Init16"] if v["writable"] == ["Yes"]
+#print(init16_registers)
 float32_registers = [v["register"] for v in dgu1._dict.values() if v["format"] == "Float32"]
-print(f"init16_registers are {init16_registers}")
+#print(f"float32_registers are {float32_registers}")
 
-my_range = ranges(init16_registers) # Use ranges() find consecutive numbers in list
+my_range = ranges_float32(float32_registers) # Use ranges() find consecutive numbers in list
 print(f"my_range results are {my_range}")
 
 test = []
 for k,v in my_range:
 	#print(k,v)
-	k = k - 1
+	#k = k - 1 # for init16
+	k = k - 2 # for float32
 	v = v - k
 	#print(k, v)
 	print(k, v)
@@ -278,6 +300,7 @@ for k,v in my_range:
 
 print(test) # list of register_start and register_count values
 # [(2000, 41), (6566, 1)] 
+# [(1000, 38)]
 
 print(f"test result is {test[0]}")
 for k, v in test:
@@ -285,10 +308,10 @@ for k, v in test:
 	print(f"register is {k} and value is {v}")
 print(test[0])
 
-dgu1._code.update_dgu(dgu1)
+dgu1._code.read_dgu(dgu1)
 
 for k, v in dgu1._dict.items():
-	print(v.name, v.value)
+	print(v.name, v.value, v.previous_value)
 
 
 min_Float32_register = [min(int(d['register']) for d in dgu1._dict.values() if d['format'] == 'Float32')]
@@ -307,11 +330,11 @@ max_Init16_register = max(int(d['register']) for d in dgu1._dict.values() if d['
 
 
 
-init16, result = dgu1._code.read_init16_rtu(dgu1, 2000, 41,)
-if result == 1:
+#init16, result = dgu1._code.read_init16_rtu(dgu1, 2000, 41,)
+#if result == 1:
 	#print(init16)
 	#print(f"init16 length is {len(init16)}")
-	pass
+	#pass
 
 
 
