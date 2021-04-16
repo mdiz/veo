@@ -7,6 +7,9 @@ from acu_dict import acu_var_dict
 from dgu_dict import dgu_var_dict
 from setup import acu_setup_dict
 from setup import dgu_setup_dict
+import time
+import os
+import psutil #psutil (python system and process utilities) is a cross-platform library for retrieving information on running processes and system utilization (CPU, memory, disks, network, sensors)
 
 # Need group name for DGU, ACU, ARC, PFC...
 	# applications
@@ -235,10 +238,96 @@ dgu2 = DGU("dgu", 2, 6, dgu_var_dict, "dgu_code")
 #result = dgu1.update_dgu()
 #print(f"read_dgu_rtu(dgu1) result is {result}")
 
+#print(time.gmtime(0)) # tells us what epoch is on this system
+#print(time.gmtime()) # time of day list
+
+
+
+
+def veo_time():
+	""" Seconds since last boot
+	requires time and psutil """
+	x = int(time.time()) - int(psutil.boot_time())
+	return x
+
+def exist(obj):
+	try:
+		obj
+	except NameError:
+		obj_exists = 0
+	else:
+	    obj_exists = 1
+	    return obj_exists
+
+
+
+print(veo_time())
+def result_delay(result, time): # wait while a process runs or till a timer expires
+	start = veo_time()
+	while veo_time() - start < time:
+		if "result" in locals() or "result" in globals():
+			#break
+			pass
+
+		try:
+			result
+		except NameError:
+			var_exists = False
+		else:
+		    var_exists = True
+		    break
+
+
+
+#result=1
+#result_delay(mike, 5)
+print(veo_time())
+
+
+print(exist(result))
+
+
+
+
+
+import datetime
+last_reboot = psutil.boot_time()
+#print(f"boot time is {datetime.datetime.fromtimestamp(last_reboot)}")
+#print(f"boot time is {psutil.boot_time()}")
+#print(f"veo time is {veo_time()}")
+#bprint (f"veo time in days is {veo_time()/60/60/24}")
+
+
+
 for i in range(1):
-	#result = dgu1.update_dgu() * dgu2.update_dgu()
-	#print(f"read_dgu(dgu1) result is {result}")
-	pass
+	#dgu1._code.read_dgu(dgu1)
+	#time.sleep(0.1)
+	#dgu2._code.read_dgu(dgu2)
+	#print(f"DGU1 Serial Number is {dgu1._dict.vSerialNumber.value}")
+	#print(f"DGU2 Serial Number is {dgu2._dict.vSerialNumber.value}")
+	if dgu1._dict.vModbusPacketError.value > 0 or dgu1._dict.vModbusCRCError.value > 0 or dgu2._dict.vModbusPacketError.value > 0 or dgu2._dict.vModbusCRCError.value > 0:
+		#print("Modbus error detected")
+		#print(f"DGU1 vModbusPacketError = {dgu1._dict.vModbusPacketError.value}")
+		print(f"DGU1 vModbusCRCError = {dgu1._dict.vModbusCRCError.value}")
+		#print(f"DGU2 vModbusPacketError = {dgu2._dict.vModbusPacketError.value}")
+		print(f"DGU2 vModbusCRCError = {dgu2._dict.vModbusCRCError.value}")
+
+	#time.sleep(0.1)
+
+#import os
+#t = os.popen('uptime -p').read()[:-1] # this might be nice as part of veo.time
+
+
+
+
+
+import psutil #psutil (python system and process utilities) is a cross-platform library for retrieving information on running processes and system utilization (CPU, memory, disks, network, sensors)
+
+last_reboot = psutil.boot_time() # seconds since epoch
+print(datetime.datetime.fromtimestamp(last_reboot))
+
+
+
 
 
 for key, value in dgu1._dict.items():
@@ -286,7 +375,7 @@ float32_registers = [v["register"] for v in dgu1._dict.values() if v["format"] =
 #print(f"float32_registers are {float32_registers}")
 
 my_range = ranges_float32(float32_registers) # Use ranges() find consecutive numbers in list
-print(f"my_range results are {my_range}")
+#print(f"my_range results are {my_range}")
 
 test = []
 for k,v in my_range:
@@ -295,23 +384,25 @@ for k,v in my_range:
 	k = k - 2 # for float32
 	v = v - k
 	#print(k, v)
-	print(k, v)
+	#print(k, v)
 	test.append((k, v))
 
-print(test) # list of register_start and register_count values
+#print(test) # list of register_start and register_count values
 # [(2000, 41), (6566, 1)] 
 # [(1000, 38)]
 
-print(f"test result is {test[0]}")
+#print(f"test result is {test[0]}")
 for k, v in test:
 	#print(k,v)
-	print(f"register is {k} and value is {v}")
-print(test[0])
+	#print(f"register is {k} and value is {v}")
+	pass
+#print(test[0])
 
 dgu1._code.read_dgu(dgu1)
 
 for k, v in dgu1._dict.items():
-	print(v.name, v.value, v.previous_value)
+	#print(v.name, v.value, v.previous_value)
+	pass
 
 
 min_Float32_register = [min(int(d['register']) for d in dgu1._dict.values() if d['format'] == 'Float32')]

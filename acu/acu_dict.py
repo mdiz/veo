@@ -9,6 +9,17 @@
 # 4.a - Process var_dict.last_change and var_dict.local_log
 # 5 - Copy var_dict.dict to IO.outputs value
 
+subscriptions_dict = {
+#acu number , point ref, dgu number, point ref
+# question is how will user configure the system?
+#dgu1, ref = [(acu1, ref), (acu1, ref), (acu2, ref) ... ]
+# use a text file?
+#acu1.vReturnTempConditionedValue = dgu1.iReturnTemp
+
+"acu1" : {"vReturnTempConditionedValue":"dgu1.iReturnTemp", "vSupplyTempConditionedValue":"dgu1.iSupplyTemp", "vSpaceTempConditionedValue":"dgu1.iSpaceTemp"},
+"acu2" : {"vReturnTempConditionedValue":"dgu2.iReturnTemp", "vSupplyTempConditionedValue":"dgu2.iSupplyTemp", "vSpaceTempConditionedValue":"dgu2.iSpaceTemp"}
+}
+#add "dgu" and "dgu_ref" to acu_var_dict with subscriptions file config folder
 
 
 acu_var_dict = {

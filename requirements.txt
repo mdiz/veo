@@ -12,6 +12,7 @@ mccabe==0.6.1
 packaging==20.9
 pluggy==0.13.1
 prompt-toolkit==2.0.4
+psutil==5.8.0
 py==1.10.0
 pyasn1==0.4.8
 pycodestyle==2.6.0
