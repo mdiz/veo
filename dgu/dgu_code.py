@@ -27,6 +27,9 @@ import psutil #psutil (python system and process utilities) is a cross-platform 
 
 #from dgu_dict import dgu_var_dict
 
+
+
+
 def fn_rtu_scan(my_start=1, my_stop=256, my_timeout=0.1,my_baudrate=9600):
 	"""Scan for RTU devices"""
 	client = ModbusClient(method='rtu', port=fn_serial_port_list(), timeout=my_timeout, baudrate=my_baudrate)
@@ -79,6 +82,12 @@ def write_dgu_rtu(self):
 					#rq = client.write_register(value.register - 1, value.value, unit = self._mbus_rtu)
 					pass
 	client.close()
+
+def veo_time():
+	""" Seconds since last boot
+	requires time and psutil """
+	x = int(time.time()) - int(psutil.boot_time())
+	return x
 
 def check_result(count, object):
 	"""Check object based length"""
@@ -151,15 +160,17 @@ def read_dgu(self):
 	for register_start, register_count in read_patterns:
 		read_result, check = read_init16_rtu(self, register_start, register_count) # read registers from dgu
 		if check == 1:
+			# UPDATE add error if check = 0
 			registers = (list(range(register_start + 1, register_start + register_count + 1))) # build list of registers
 			# UPDATE there may be a safer way to do this https://www.geeksforgeeks.org/python-merge-two-lists-into-list-of-tuples/
 			update_list.extend(merge_list(registers, read_result)) # combine read_patterns with return of read_init16_rtu() into list of tuples to update dgu_dict 
-			""" Read float32 registers """
+	""" Read float32 registers """
 	check = 0
 	read_patterns = register_float32_read_pattern(self) # list of tuples containing register start and register count for each series of registers in dgu_dict
 	for register_start, register_count in read_patterns:
 		read_result, check = read_float32_rtu(self, register_start, register_count) # read registers from dgu
 		if check == 1:
+			# UPDATE add error if check = 0
 			registers = (list(range(register_start + 2, register_start + register_count + 1, 2))) # build list of registers
 			# UPDATE there may be a safer way to do this https://www.geeksforgeeks.org/python-merge-two-lists-into-list-of-tuples/
 			update_list.extend(merge_list(registers, read_result)) # combine read_patterns with return of read_float32_rtu() into list of tuples to update dgu_dict 
@@ -167,11 +178,13 @@ def read_dgu(self):
 	for key, value in self._dict.items(): # use update_list to update dgu_dict
 		for register, result in update_list:
 			if value.register == register:
+				if value.value != result:
+					value.last_change = veo_time()
 				value.previous_value = value.value
+				value.last_update = veo_time()
 				value.value = result 
-				value.last_change = 55 # UPDATE this should be cpu time since boot (veo.time from veo object)
 				# UPDATE function to update local_log
-				#self[value.name] = value.value
+
 							
 def write_dgu(self):
 # WERE HERE IN DEV.  NEED FUNCTION TO WRITE DGU REGISTERS
@@ -202,27 +215,15 @@ def result_delay(result, time): # wait while a process runs or till a timer expi
 
 
 
-
-
-def read_init16_rtu(self, register_start, register_count, my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):
+def read_init16_rtu(self, register_start, register_count):
 	client = connect_rtu()
 	x = 0
 	# UPDATE this whole function needs review.
 	# This is our working model we're currently using
 	try:
 		rr = client.read_input_registers(register_start, register_count, unit = self._mbus_rtu) # Read 16bit values.
-
-		try:
-			rr.registers
-		except NameError:
-			var_exists = False
-		else:
-		    var_exists = True
-		    break
-
-
-
-		#time.sleep(0.1)
+		# UPDATE make this a var to set read speed for system
+		time.sleep(0.01)
 
 		x = check_result(register_count,rr.registers)
 
@@ -244,7 +245,7 @@ def read_init16_rtu(self, register_start, register_count, my_port=fn_serial_port
 	return rr.registers, x
 
 
-def read_float32_rtu(self, register_start, register_count, my_port=fn_serial_port_list(), my_timeout=1, my_baudrate=9600):
+def read_float32_rtu(self, register_start, register_count):
 	client = connect_rtu()
 	x = 0
 	# UPDATE this whole function needs review.
@@ -253,7 +254,7 @@ def read_float32_rtu(self, register_start, register_count, my_port=fn_serial_por
 		float_registers = client.read_input_registers(1000, 38, unit = self._mbus_rtu) # Read 32bit float values
 		float_registers = fn_decode_float(float_registers.registers) # Decode 32bit float values  # fails here if no device 
 
-		#time.sleep(0.1)
+		time.sleep(0.01)
 
 		x = check_result(38 // 2,float_registers)
 

@@ -251,12 +251,14 @@ def veo_time():
 	return x
 
 def exist(obj):
+	obj_exists = 0
 	try:
 		obj
 	except NameError:
 		obj_exists = 0
 	else:
 	    obj_exists = 1
+	finally:
 	    return obj_exists
 
 
@@ -279,12 +281,16 @@ def result_delay(result, time): # wait while a process runs or till a timer expi
 
 
 
+
+
+
+
 #result=1
 #result_delay(mike, 5)
 print(veo_time())
 
 
-print(exist(result))
+
 
 
 
@@ -300,9 +306,9 @@ last_reboot = psutil.boot_time()
 
 
 for i in range(1):
-	#dgu1._code.read_dgu(dgu1)
+	dgu1._code.read_dgu(dgu1)
 	#time.sleep(0.1)
-	#dgu2._code.read_dgu(dgu2)
+	dgu2._code.read_dgu(dgu2)
 	#print(f"DGU1 Serial Number is {dgu1._dict.vSerialNumber.value}")
 	#print(f"DGU2 Serial Number is {dgu2._dict.vSerialNumber.value}")
 	if dgu1._dict.vModbusPacketError.value > 0 or dgu1._dict.vModbusCRCError.value > 0 or dgu2._dict.vModbusPacketError.value > 0 or dgu2._dict.vModbusCRCError.value > 0:
@@ -311,6 +317,8 @@ for i in range(1):
 		print(f"DGU1 vModbusCRCError = {dgu1._dict.vModbusCRCError.value}")
 		#print(f"DGU2 vModbusPacketError = {dgu2._dict.vModbusPacketError.value}")
 		print(f"DGU2 vModbusCRCError = {dgu2._dict.vModbusCRCError.value}")
+	else:
+		print("No Error")
 
 	#time.sleep(0.1)
 
@@ -401,7 +409,7 @@ for k, v in test:
 dgu1._code.read_dgu(dgu1)
 
 for k, v in dgu1._dict.items():
-	#print(v.name, v.value, v.previous_value)
+	print(v.name, v.value, v.previous_value, v.last_update, v.last_change)
 	pass
 
 
